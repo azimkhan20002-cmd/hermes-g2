@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes Glasses</title>
+<style>body{font-family:-apple-system,system-ui,sans-serif;background:#111;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}</style>
+</head><body><p id="m">Connecting to Hermes...</p>
+<script>
+// Stable entry point. Looks up the Mac's current tunnel address and forwards there.
+// The device token rides in the URL fragment, which is never sent to GitHub.
+(async () => {
+  const m = document.getElementById('m')
+  const frag = new URLSearchParams(location.hash.slice(1))
+  const q = new URLSearchParams(location.search)
+  const token = frag.get('t') || q.get('t')
+  const say = frag.get('say')
+  for (let i = 0; i < 20; i++) {
+    try {
+      const r = await fetch('current.json?ts=' + Date.now(), { cache: 'no-store' })
+      const { origin } = await r.json()
+      const host = new URL(origin).host
+      const p = new URLSearchParams({ server: 'wss://' + host + '/voice' })
+      if (token) p.set('token', token)
+      if (say) p.set('say', say)
+      location.replace(origin + '/?' + p.toString())
+      return
+    } catch (e) { m.textContent = 'Waiting for your Mac... (' + (i + 1) + ')'; await new Promise(r => setTimeout(r, 3000)) }
+  }
+  m.textContent = 'Your Mac is offline. Make sure it is on and awake.'
+})()
+</script></body></html>
